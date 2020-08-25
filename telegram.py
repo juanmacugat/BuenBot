@@ -10,9 +10,9 @@ WEBHOOK_URL = os.environ['WEBHOOK_URL']
 app = Flask(__name__)
 app.config['TESTING'] = True
 app.config['DEVELOPMENT'] = False
-app.config['DEBUG'] = False
+app.config['DEBUG'] = True
 
-supported_commands = ['/daiars', '/daiusd', '/arsusd', '/btcars']
+supported_commands = ['/daiars', '/daiusd', '/arsusd', '/btcars', '/start','/help']
 
 
 def register_webhook():
@@ -53,6 +53,13 @@ def webhook():
         send_message(chat, 'Hola! Perdon pero no entiendo tu mensaje. Intenta con los comandos definidos')
         return '200'
 
+    if command == '/start':
+        return '200'
+
+    if command == '/help':
+        send_message(chat, 'WIP')
+        return '200'
+
     response = requests.get(url='https://be.buenbit.com/api/market/tickers')
 
     if response.status_code == 200:
@@ -60,11 +67,14 @@ def webhook():
         if command == '/arsusd':
             send_message(chat, f'{ars_usd(tickers)} ARS')
         if command == '/daiars':
-            send_message(chat, f'{dai_ars(tickers)} ARS')
+            send_message(chat, 'COMPRA: ' + dai_ars(tickers)['purchase_price'] + ' ARS - ' +
+                         'VENTA: ' + dai_ars(tickers)['selling_price'] + ' ARS')
         elif command == '/daiusd':
-            send_message(chat, f'{dai_usd(tickers)} USD')
+            send_message(chat, 'COMPRA: ' + dai_usd(tickers)['purchase_price'] + ' USD - ' +
+                         'VENTA: ' + dai_usd(tickers)['selling_price'] + ' USD')
         elif command == '/btcars':
-            send_message(chat, f'{btc_ars(tickers)} ARS')
+            send_message(chat, 'COMPRA: ' + btc_ars(tickers)['purchase_price'] + ' ARS - ' +
+                         'VENTA: ' + btc_ars(tickers)['selling_price'] + ' ARS')
     else:
         send_message(chat, 'Intenta mas tarde, estoy muy cansado ahora')
 
@@ -72,15 +82,15 @@ def webhook():
 
 
 def btc_ars(tickers):
-    return tickers['object']['btcars']['selling_price']
+    return tickers['object']['btcars']
 
 
 def dai_usd(tickers):
-    return tickers['object']['daiusd']['selling_price']
+    return tickers['object']['daiusd']
 
 
 def dai_ars(tickers):
-    return tickers['object']['daiars']['selling_price']
+    return tickers['object']['daiars']
 
 
 def ars_usd(tickers):
@@ -92,4 +102,4 @@ def ars_usd(tickers):
 startup()
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(port=443, host='0.0.0.0')
